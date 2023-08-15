@@ -1,4 +1,4 @@
-# Building a GET API
+# Building a GET API : Code-Along
 
 ## Learning Goals
 
