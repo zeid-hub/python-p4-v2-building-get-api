@@ -727,7 +727,7 @@ class Game(db.Model, SerializerMixin):
 
     # Association proxy to get users for this game through reviews
     users = association_proxy('reviews', 'user',
-                              creator=lambda game: User(user=user))
+                              creator=lambda user_obj: Review(user=user_obj))
 ```
 
 Now we can update the view to to access users for a game by `game.users` :
@@ -868,7 +868,7 @@ class Game(db.Model, SerializerMixin):
 
     # Association proxy to get users for this game through reviews
     users = association_proxy('reviews', 'user',
-                              creator=lambda game: User(user=user))
+                              creator=lambda user_obj: Review(user=user_obj))
 
     def __repr__(self):
         return f'<Game {self.title} for {self.platform}>'
