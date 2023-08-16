@@ -3,6 +3,8 @@
 ## Learning Goals
 
 - Build an API to handle GET requests.
+- Serialize objects
+- Implement an association proxy
 
 ---
 
