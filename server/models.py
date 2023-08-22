@@ -5,15 +5,17 @@ from sqlalchemy import MetaData
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.associationproxy import association_proxy
 
-metadata = MetaData(naming_convention={
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-})
+metadata = MetaData(
+    naming_convention={
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    }
+)
 
 db = SQLAlchemy(metadata=metadata)
 
 
 class Game(db.Model):
-    __tablename__ = 'games'
+    __tablename__ = "games"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, unique=True)
@@ -23,14 +25,14 @@ class Game(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    reviews = db.relationship('Review', back_populates='game')
+    reviews = db.relationship("Review", back_populates="game")
 
     def __repr__(self):
-        return f'<Game {self.title} for {self.platform}>'
+        return f"<Game {self.title} for {self.platform}>"
 
 
 class Review(db.Model):
-    __tablename__ = 'reviews'
+    __tablename__ = "reviews"
 
     id = db.Column(db.Integer, primary_key=True)
     score = db.Column(db.Integer)
@@ -38,18 +40,18 @@ class Review(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    game_id = db.Column(db.Integer, db.ForeignKey("games.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
-    game = db.relationship('Game', back_populates='reviews')
-    user = db.relationship('User', back_populates='reviews')
+    game = db.relationship("Game", back_populates="reviews")
+    user = db.relationship("User", back_populates="reviews")
 
     def __repr__(self):
-        return f'<Review ({self.id}) of {self.game}: {self.score}/10>'
+        return f"<Review ({self.id}) of {self.game}: {self.score}/10>"
 
 
 class User(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
@@ -57,4 +59,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    reviews = db.relationship('Review', back_populates='user')
+    reviews = db.relationship("Review", back_populates="user")
+
+    def __repr__(self):
+        return f"<User ({self.id}) {self.name}>"

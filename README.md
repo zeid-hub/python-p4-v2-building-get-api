@@ -458,6 +458,14 @@ tree must be configured with `SerializerMixin`. Additionally, we need to set
 rules to make sure that we aren't accidentally _recursively_ serializing: we
 don't want a game's reviews' game's reviews, after all.
 
+### Troubleshooting Tips
+- If you end up in a **recursive loop**, you'll see an error like the one below. You will need to tweak your serialization rules to avoid nested undesired data. For example, if you want to include a game's reviews in the serialized data but the review serializer is also trying to include the game, you'll end up in a recursive loop.
+  ```console
+    RecursionError: maximum recursion depth exceeded while calling a Python object
+  ```
+
+- The same principle should be applied when dealing with unusual responses while testing our API with Postman. If despite crossing all the t's and dotting all the i's, you still get a simple string letter rather than your JSON data, it's likely that you're in a recursive loop. Check your serialization rules and make sure that you're not trying to serialize a model that is already being serialized. 
+
 Let's modify all of our models to set them up for serialization by adding
 `SerializerMixin` as a superclass:
 
