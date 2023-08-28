@@ -65,6 +65,8 @@ $ flask db init
 $ flask db migrate -m 'initial migration'
 $ flask db upgrade head
 $ python seed.py
+$ export FLASK_APP=app.py
+$ export FLASK_RUN_PORT=5555
 ```
 
 You can view the models in the `server/models.py` module, and the migrations in
@@ -111,7 +113,7 @@ function GameList() {
 
 It's now our job to set up the server so that when a GET request is made to
 `/games`, we return an array of all the games in our database in JSON format.
-Let's set that up in Flask:
+Let's set that up in Flask by adding a view named `games()`:
 
 ```py
 # server/app.py
@@ -123,8 +125,8 @@ from flask_migrate import Migrate
 from models import db, User, Review, Game
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.json.compact = False
 
 migrate = Migrate(app, db)
@@ -417,7 +419,7 @@ from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 class Game(db.Model, SerializerMixin):
-    __tablename__ = 'games'
+    __tablename__ = "games"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, unique=True)
@@ -427,10 +429,10 @@ class Game(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    reviews = db.relationship('Review', back_populates='game')
+    reviews = db.relationship("Review", back_populates="game")
 
     def __repr__(self):
-        return f'<Game {self.title} for {self.platform}>'
+        return f"<Game {self.title} for {self.platform}>"
 
 # review, user
 
@@ -459,35 +461,46 @@ rules to make sure that we aren't accidentally _recursively_ serializing: we
 don't want a game's reviews' game's reviews, after all.
 
 ### Troubleshooting Tips
-- If you end up in a **recursive loop**, you'll see an error like the one below. You will need to tweak your serialization rules to avoid nested undesired data. For example, if you want to include a game's reviews in the serialized data but the review serializer is also trying to include the game, you'll end up in a recursive loop.
+
+- If you end up in a **recursive loop**, you'll see an error like the one below.
+  You will need to tweak your serialization rules to avoid nested undesired
+  data. For example, if you want to include a game's reviews in the serialized
+  data but the review serializer is also trying to include the game, you'll end
+  up in a recursive loop.
+
   ```console
     RecursionError: maximum recursion depth exceeded while calling a Python object
   ```
 
-- The same principle should be applied when dealing with unusual responses while testing our API with Postman. If despite crossing all the t's and dotting all the i's, you still get a simple string letter rather than your JSON data, it's likely that you're in a recursive loop. Check your serialization rules and make sure that you're not trying to serialize a model that is already being serialized. 
+- The same principle should be applied when dealing with unusual responses while
+  testing our API with Postman. If despite crossing all the t's and dotting all
+  the i's, you still get a simple string letter rather than your JSON data, it's
+  likely that you're in a recursive loop. Check your serialization rules and
+  make sure that you're not trying to serialize a model that is already being
+  serialized.
 
 Let's modify all of our models to set them up for serialization by adding
 `SerializerMixin` as a superclass:
 
 ```py
 class Game(db.Model, SerializerMixin):
-    __tablename__ = 'games'
+    __tablename__ = "games"
 
-    serialize_rules = ('-reviews.game',)
+    serialize_rules = ("-reviews.game",)
 
     # columns, repr
 
 class Review(db.Model, SerializerMixin):
-    __tablename__ = 'reviews'
+    __tablename__ = "reviews"
 
-    serialize_rules = ('-game.reviews', '-user.reviews',)
+    serialize_rules = ("-game.reviews", "-user.reviews",)
 
     # columns, repr
 
 class User(db.Model, SerializerMixin):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
-    serialize_rules = ('-reviews.user',)
+    serialize_rules = ("-reviews.user",)
 
     # columns, repr
 ```
@@ -674,7 +687,7 @@ def game_users_by_id(id):
     users = []
     for review in game.reviews:
         user = review.user
-        user_dict = user.to_dict(rules=('-reviews',))
+        user_dict = user.to_dict(rules=("-reviews",))
         users.append(user_dict)
 
     response = make_response(
@@ -729,18 +742,18 @@ each review:
 
 ```py
 class Game(db.Model, SerializerMixin):
-    __tablename__ = 'games'
+    __tablename__ = "games"
 
-    serialize_rules = ('-reviews.game',)
+    serialize_rules = ("-reviews.game",)
 
     # columns and relationship ...
 
     # Association proxy to get users for this game through reviews
-    users = association_proxy('reviews', 'user',
+    users = association_proxy("reviews", "user",
                               creator=lambda user_obj: Review(user=user_obj))
 ```
 
-Now we can update the view to to access users for a game by `game.users` :
+Now we can update the view to access users for a game by `game.users` :
 
 ```py
 @app.route('/games/users/<int:id>')
@@ -748,7 +761,7 @@ def game_users_by_id(id):
     game = Game.query.filter(Game.id == id).first()
 
     # use association proxy to get users for a game
-    users = [user.to_dict(rules=('-reviews',)) for user in game.users]
+    users = [user.to_dict(rules=("-reviews",)) for user in game.users]
     response = make_response(
         users,
         200
@@ -787,8 +800,8 @@ from flask_migrate import Migrate
 from models import db, User, Review, Game
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.json.compact = False
 
 migrate = Migrate(app, db)
@@ -833,7 +846,7 @@ def game_users_by_id(id):
     game = Game.query.filter(Game.id == id).first()
 
     # use association proxy to get users for a game
-    users = [user.to_dict(rules=('-reviews',)) for user in game.users]
+    users = [user.to_dict(rules=("-reviews",)) for user in game.users]
     response = make_response(
         users,
         200
@@ -862,9 +875,9 @@ db = SQLAlchemy(metadata=metadata)
 
 
 class Game(db.Model, SerializerMixin):
-    __tablename__ = 'games'
+    __tablename__ = "games"
 
-    serialize_rules = ('-reviews.game',)
+    serialize_rules = ("-reviews.game",)
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, unique=True)
@@ -874,20 +887,20 @@ class Game(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    reviews = db.relationship('Review', back_populates='game')
+    reviews = db.relationship("Review", back_populates="game")
 
     # Association proxy to get users for this game through reviews
-    users = association_proxy('reviews', 'user',
+    users = association_proxy("reviews", "user",
                               creator=lambda user_obj: Review(user=user_obj))
 
     def __repr__(self):
-        return f'<Game {self.title} for {self.platform}>'
+        return f"<Game {self.title} for {self.platform}>"
 
 
 class Review(db.Model, SerializerMixin):
-    __tablename__ = 'reviews'
+    __tablename__ = "reviews"
 
-    serialize_rules = ('-game.reviews', '-user.reviews',)
+    serialize_rules = ("-game.reviews", "-user.reviews",)
 
     id = db.Column(db.Integer, primary_key=True)
     score = db.Column(db.Integer)
@@ -895,20 +908,20 @@ class Review(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    game_id = db.Column(db.Integer, db.ForeignKey("games.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
 
-    game = db.relationship('Game', back_populates='reviews')
-    user = db.relationship('User', back_populates='reviews')
+    game = db.relationship("Game", back_populates="reviews")
+    user = db.relationship("User", back_populates="reviews")
 
     def __repr__(self):
-        return f'<Review ({self.id}) of {self.game}: {self.score}/10>'
+        return f"<Review ({self.id}) of {self.game}: {self.score}/10>"
 
 
 class User(db.Model, SerializerMixin):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
-    serialize_rules = ('-reviews.user',)
+    serialize_rules = ("-reviews.user",)
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
@@ -916,8 +929,10 @@ class User(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    reviews = db.relationship('Review', back_populates='user')
+    reviews = db.relationship("Review", back_populates="user")
 
+    def __repr__(self):
+        return f"<User ({self.id}) {self.name}>"
 ```
 
 ---

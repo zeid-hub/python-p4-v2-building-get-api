@@ -15,4 +15,13 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
+@app.route('/')
+def index():
+    return "Index for Game/Review/User API"
+
 # start building your API here
+
+
+if __name__ == '__main__':
+    app.run(port=5555, debug=True)
+
