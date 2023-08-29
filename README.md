@@ -414,9 +414,18 @@ Let's modify `models.py` to serialize the `Game` model:
 # server/models.py
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import MetaData
 from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.ext.associationproxy import association_proxy
 
-db = SQLAlchemy()
+metadata = MetaData(
+    naming_convention={
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    }
+)
+
+db = SQLAlchemy(metadata=metadata)
+
 
 class Game(db.Model, SerializerMixin):
     __tablename__ = "games"
@@ -483,6 +492,8 @@ Let's modify all of our models to set them up for serialization by adding
 `SerializerMixin` as a superclass:
 
 ```py
+# imports, metadata, db
+
 class Game(db.Model, SerializerMixin):
     __tablename__ = "games"
 
@@ -808,12 +819,11 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
-
 @app.route('/')
 def index():
     return "Index for Game/Review/User API"
 
-
+# start building your API here
 @app.route('/games')
 def games():
 
@@ -825,7 +835,6 @@ def games():
     )
 
     return response
-
 
 @app.route('/games/<int:id>')
 def game_by_id(id):
@@ -840,7 +849,6 @@ def game_by_id(id):
 
     return response
 
-
 @app.route('/games/users/<int:id>')
 def game_users_by_id(id):
     game = Game.query.filter(Game.id == id).first()
@@ -854,7 +862,6 @@ def game_users_by_id(id):
 
     return response
 
-
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
 ```
@@ -867,9 +874,11 @@ from sqlalchemy import MetaData
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.associationproxy import association_proxy
 
-metadata = MetaData(naming_convention={
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-})
+metadata = MetaData(
+    naming_convention={
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    }
+)
 
 db = SQLAlchemy(metadata=metadata)
 
@@ -878,6 +887,7 @@ class Game(db.Model, SerializerMixin):
     __tablename__ = "games"
 
     serialize_rules = ("-reviews.game",)
+
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, unique=True)
@@ -892,7 +902,6 @@ class Game(db.Model, SerializerMixin):
     # Association proxy to get users for this game through reviews
     users = association_proxy("reviews", "user",
                               creator=lambda user_obj: Review(user=user_obj))
-
     def __repr__(self):
         return f"<Game {self.title} for {self.platform}>"
 
@@ -914,6 +923,7 @@ class Review(db.Model, SerializerMixin):
     game = db.relationship("Game", back_populates="reviews")
     user = db.relationship("User", back_populates="reviews")
 
+
     def __repr__(self):
         return f"<Review ({self.id}) of {self.game}: {self.score}/10>"
 
@@ -933,6 +943,7 @@ class User(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"<User ({self.id}) {self.name}>"
+
 ```
 
 ---
