@@ -170,7 +170,7 @@ explore:
   Unfortunately, it will not accept models as arguments (darn!).
 - `app.json.compact = False` is a configuration that has JSON responses print on
   separate lines with indentation. This adds some overhead, but if human eyes
-  will be looking at your API, it's always good to have this set to `True`.
+  will be looking at your API, it's always good to have this set to `False`.
 - Our query results have to be reformatted as dictionaries for `jsonify` to work
   its magic. The `__dict__` attribute cannot be used here because SQLAlchemy
   records have attributes that are nonstandard Python objects. We're leaving
